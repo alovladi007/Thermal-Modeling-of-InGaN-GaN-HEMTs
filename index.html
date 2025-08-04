@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InGaN/GaN HEMT Thermal Analysis Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+        }
+        input, select {
+            padding: 5px;
+            width: 200px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .temperature-bar {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(to right, 
+                #0000ff 0%, 
+                #00ff00 25%, 
+                #ffff00 50%, 
+                #ff8800 75%, 
+                #ff0000 100%);
+            border-radius: 4px;
+            position: relative;
+            margin: 10px 0;
+        }
+        .temp-marker {
+            position: absolute;
+            top: -25px;
+            transform: translateX(-50%);
+            background: black;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .temp-marker::after {
+            content: '▼';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: black;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .warning {
+            color: #ff6600;
+            font-weight: bold;
+        }
+        .critical {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .good {
+            color: #00aa00;
+            font-weight: bold;
+        }
+        .device-diagram {
+            text-align: center;
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>InGaN/GaN HEMT Thermal Analysis Demo</h1>
+    
+    <div class="container">
+        <h2>Device Configuration</h2>
+        <div class="device-diagram">
+            <pre>
+    Source         Gate          Drain
+      │             │             │
+      ├─────────────┼─────────────┤
+      │             ▼             │
+  Cap │         ████████          │ 2nm GaN
+  Bar │      ▓▓▓▓▓▓▓▓▓▓▓▓▓       │ 15nm In₀.₁₇Al₀.₈₃N
+ 2DEG ├─────▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓──────┤ ← Hot spot
+ Chan │     ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒      │ 300nm GaN
+ Buff │     ░░░░░░░░░░░░░░░      │ 1.5μm GaN
+      │     ···············      │
+ Nucl │     ···············      │ 100nm AlN
+  ════╧═════════════════════════╧════
+            Substrate (100μm)
+            </pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Operating Conditions</h2>
+        <div class="input-group">
+            <label for="substrate">Substrate:</label>
+            <select id="substrate">
+                <option value="SiC" selected>SiC (k=370 W/mK)</option>
+                <option value="Si">Si (k=148 W/mK)</option>
+                <option value="GaN">GaN (k=230 W/mK)</option>
+                <option value="Sapphire">Sapphire (k=35 W/mK)</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="vds">Drain Voltage (V):</label>
+            <input type="number" id="vds" value="20" min="0" max="50" step="1">
+        </div>
+        <div class="input-group">
+            <label for="ids">Drain Current (mA):</label>
+            <input type="number" id="ids" value="100" min="0" max="500" step="10">
+        </div>
+        <div class="input-group">
+            <label for="ambient">Ambient Temp (°C):</label>
+            <input type="number" id="ambient" value="27" min="0" max="100" step="1">
+        </div>
+        <button onclick="calculateThermal()">Calculate Thermal Analysis</button>
+    </div>
+
+    <div class="container results" id="results" style="display:none;">
+        <h2>Thermal Analysis Results</h2>
+        <div id="resultsContent"></div>
+    </div>
+
+    <div class="container" id="comparison" style="display:none;">
+        <h2>Substrate Comparison</h2>
+        <div id="comparisonContent"></div>
+    </div>
+
+    <script>
+        // Thermal resistance values (K/W) for 100μm gate width
+        const thermalResistance = {
+            'SiC': 50,
+            'Si': 85,
+            'GaN': 65,
+            'Sapphire': 220
+        };
+
+        function calculateThermal() {
+            const substrate = document.getElementById('substrate').value;
+            const vds = parseFloat(document.getElementById('vds').value);
+            const ids = parseFloat(document.getElementById('ids').value) / 1000; // Convert to A
+            const ambient = parseFloat(document.getElementById('ambient').value);
+            
+            const power = vds * ids;
+            const rth = thermalResistance[substrate];
+            const tempRise = power * rth;
+            const junction = ambient + tempRise;
+            
+            // Calculate breakdown
+            const rthChannel = rth * 0.25;
+            const rthSubstrate = rth * 0.60;
+            const rthInterface = rth * 0.15;
+            
+            // Temperature status
+            let status, statusClass;
+            if (junction > 150) {
+                status = '❌ CRITICAL - Exceeds 150°C limit!';
+                statusClass = 'critical';
+            } else if (junction > 125) {
+                status = '⚠️ WARNING - Approaching thermal limit';
+                statusClass = 'warning';
+            } else {
+                status = '✅ GOOD - Within safe operating range';
+                statusClass = 'good';
+            }
+            
+            // Calculate temperature position for visualization
+            const tempPosition = Math.min(Math.max((junction - 27) / (200 - 27) * 100, 0), 100);
+            
+            // Generate results HTML
+            let resultsHTML = `
+                <h3>Power Dissipation: ${power.toFixed(2)} W</h3>
+                
+                <h4>Thermal Resistance Breakdown:</h4>
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Resistance (K/W)</th>
+                        <th>Percentage</th>
+                    </tr>
+                    <tr>
+                        <td>Channel heat spreading</td>
+                        <td>${rthChannel.toFixed(1)}</td>
+                        <td>${(rthChannel/rth*100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Substrate thermal path</td>
+                        <td>${rthSubstrate.toFixed(1)}</td>
+                        <td>${(rthSubstrate/rth*100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Interface resistance</td>
+                        <td>${rthInterface.toFixed(1)}</td>
+                        <td>${(rthInterface/rth*100).toFixed(1)}%</td>
+                    </tr>
+                    <tr style="font-weight: bold;">
+                        <td>TOTAL</td>
+                        <td>${rth.toFixed(1)}</td>
+                        <td>100%</td>
+                    </tr>
+                </table>
+                
+                <h4>Temperature Results:</h4>
+                <p><strong>Junction Temperature: ${junction.toFixed(1)}°C</strong></p>
+                <p>Temperature Rise: ${tempRise.toFixed(1)} K</p>
+                <p>Status: <span class="${statusClass}">${status}</span></p>
+                
+                <div class="temperature-bar">
+                    <div class="temp-marker" style="left: ${tempPosition}%;">
+                        ${junction.toFixed(0)}°C
+                    </div>
+                </div>
+                <p style="text-align: center; margin-top: 30px;">
+                    <span style="color: blue;">Cold (27°C)</span> ← → 
+                    <span style="color: red;">Hot (200°C)</span>
+                </p>
+                
+                <h4>Power Handling:</h4>
+                <p>Maximum power @ 150°C: ${((150 - ambient) / rth).toFixed(2)} W</p>
+                <p>Recommended @ 125°C: ${((125 - ambient) / rth).toFixed(2)} W</p>
+                <p>Thermal margin: ${(((150 - ambient) / rth) - power).toFixed(2)} W</p>
+            `;
+            
+            document.getElementById('resultsContent').innerHTML = resultsHTML;
+            document.getElementById('results').style.display = 'block';
+            
+            // Generate comparison table
+            generateComparison(power, ambient);
+        }
+        
+        function generateComparison(power, ambient) {
+            let comparisonHTML = `
+                <table>
+                    <tr>
+                        <th>Substrate</th>
+                        <th>k (W/mK)</th>
+                        <th>Rth (K/W)</th>
+                        <th>Tj @ ${power.toFixed(1)}W (°C)</th>
+                        <th>Max Power (W)</th>
+                        <th>Status</th>
+                    </tr>
+            `;
+            
+            const substrates = ['SiC', 'Si', 'GaN', 'Sapphire'];
+            const kValues = {'SiC': 370, 'Si': 148, 'GaN': 230, 'Sapphire': 35};
+            
+            substrates.forEach(sub => {
+                const rth = thermalResistance[sub];
+                const tj = ambient + power * rth;
+                const pmax = (150 - ambient) / rth;
+                const status = tj <= 150 ? '✅' : '❌';
+                const rowClass = tj > 150 ? 'style="background-color: #ffeeee;"' : '';
+                
+                comparisonHTML += `
+                    <tr ${rowClass}>
+                        <td>${sub}</td>
+                        <td>${kValues[sub]}</td>
+                        <td>${rth}</td>
+                        <td>${tj.toFixed(1)}</td>
+                        <td>${pmax.toFixed(2)}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            });
+            
+            comparisonHTML += '</table>';
+            
+            document.getElementById('comparisonContent').innerHTML = comparisonHTML;
+            document.getElementById('comparison').style.display = 'block';
+        }
+        
+        // Calculate on page load
+        window.onload = function() {
+            calculateThermal();
+        };
+    </script>
+</body>
+</html>

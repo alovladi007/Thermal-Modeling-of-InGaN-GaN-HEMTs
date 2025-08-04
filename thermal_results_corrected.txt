@@ -1,0 +1,13 @@
+InGaN/GaN HEMT Thermal Analysis Results
+==================================================
+
+SiC Substrate Analysis (2W):
+  Thermal resistance: 1490.8 K/W
+  Junction temperature: 3008.4 °C
+  Thermal time constant: 0.2 μs
+
+Substrate Comparison:
+  SiC: Rth = 1490.8 K/W, Tj = 3008.4 °C
+  Si: Rth = 2646.6 K/W, Tj = 5320.0 °C
+  Sapphire: Rth = 8347.7 K/W, Tj = 16722.3 °C
+  GaN: Rth = 1872.4 K/W, Tj = 3771.6 °C

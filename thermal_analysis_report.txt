@@ -1,0 +1,34 @@
+InGaN/GaN HEMT Thermal Analysis Report
+==================================================
+
+Substrate Comparison Results:
+--------------------------------------------------
+
+SiC Substrate:
+  Thermal conductivity: 370 W/m·K
+  Junction temperature: 19713.3 °C
+  Temperature rise: 19686.5 K
+  Thermal resistance: 9843.23 K/W
+
+Si Substrate:
+  Thermal conductivity: 148 W/m·K
+  Junction temperature: 48091.7 °C
+  Temperature rise: 48064.8 K
+  Thermal resistance: 24032.42 K/W
+
+Sapphire Substrate:
+  Thermal conductivity: 35 W/m·K
+  Junction temperature: 200794.4 °C
+  Temperature rise: 200767.5 K
+  Thermal resistance: 100383.77 K/W
+
+GaN Substrate:
+  Thermal conductivity: 230 W/m·K
+  Junction temperature: 31229.2 °C
+  Temperature rise: 31202.3 K
+  Thermal resistance: 15601.16 K/W
+
+Recommendations:
+- SiC provides the best thermal performance
+- Consider thermal management for Tj > 150°C
+- Field plates can help reduce hot spots
