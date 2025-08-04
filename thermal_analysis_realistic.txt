@@ -1,0 +1,15 @@
+Realistic InGaN/GaN HEMT Thermal Analysis
+==================================================
+
+Substrate Comparison (1W):
+  SiC: Rth = 1569.1 K/W, Tj = 1596.0 °C
+  Si: Rth = 2571.8 K/W, Tj = 2598.6 °C
+  Sapphire: Rth = 7967.0 K/W, Tj = 7993.9 °C
+  GaN: Rth = 1976.0 K/W, Tj = 2002.9 °C
+
+Thermal time constant: 0.118 μs
+
+Recommended maximum power:
+  SiC substrate: 2.5 W
+  Si substrate: 1.5 W
+  Sapphire: 0.5 W
