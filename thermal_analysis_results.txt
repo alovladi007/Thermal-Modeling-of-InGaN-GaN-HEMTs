@@ -1,0 +1,8 @@
+InGaN/GaN HEMT Thermal Analysis Results
+========================================
+Substrate: SiC
+Operating Point: 20.0V, 100mA
+Power Dissipation: 2.00 W
+Thermal Resistance: 60.0 K/W
+Junction Temperature: 147.0 °C
+Status: TOO HOT
